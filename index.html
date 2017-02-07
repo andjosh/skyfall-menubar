@@ -1,0 +1,102 @@
+<html>
+<head>
+<title>SKYFALL Menubar</title>
+<style>
+body{
+    text-align: center;
+    font-family: monospace;
+}
+</style>
+</head>
+<body>
+    <div id="BARORESISTOR"></div>
+    <div id="THERMORESISTOR"></div>
+    <div id="HUMISTOR"></div>
+    <div id="PHOTORESISTOR"></div>
+<script>
+var ipc       = require('electron').ipcRenderer,
+    spark     = require('sparkline'),
+    pBaro     = document.querySelector('#BARORESISTOR'),
+    pThermo   = document.querySelector('#THERMORESISTOR'),
+    pPhoto    = document.querySelector('#PHOTORESISTOR'),
+    pHumid    = document.querySelector('#HUMISTOR'),
+    max_spark = 10,
+    big_data  = {};
+
+big_data.humid = [];
+big_data.photo = [];
+big_data.therm = [];
+big_data.barom = [];
+
+ipc.on('skyfall', handleSkyfall);
+
+function handleSkyfall(event, data) {
+    data.date = new Date(data.created_at);
+    data.data.map(routeSensorData.bind(null, data));
+}
+
+function routeSensorData(data, datum) {
+    datum.date = data.date;
+    switch (datum.source) {
+        case 'HUMISTOR':
+            handleHumid(datum);
+            break;
+        case 'PHOTORESISTOR':
+            handlePhoto(datum);
+            break;
+        case 'THERMORESISTOR':
+            handleThermo(datum);
+            break;
+        case 'BARORESISTOR':
+            handleBaro(datum);
+            break;
+        default:
+            console.log(datum);
+    }
+}
+
+function handleBaro(data) {
+    if (!(data.unit == 'kPa')) return;
+    var l = big_data.barom.length;
+    if (!l || big_data.barom[l - 1].date < data.date)
+        big_data.barom.push({date: data.date, value: data.value});
+    if (l == max_spark)
+        big_data.barom.shift();
+    pBaro.innerHTML = "" + data.value.toFixed(2) + " " + data.unit;
+    pBaro.innerHTML += "<br>" + spark(big_data.barom.map(pluckValue));
+}
+function handlePhoto(data) {
+    var l = big_data.photo.length;
+    if (!l || big_data.photo[l - 1].date < data.date)
+        big_data.photo.push({date: data.date, value: data.value});
+    if (l == max_spark)
+        big_data.photo.shift();
+    pPhoto.innerHTML = "" + data.value.toFixed(2) + " " + data.unit;
+    pPhoto.innerHTML += "<br>" + spark(big_data.photo.map(pluckValue));
+}
+function handleThermo(data) {
+    if (!(data.unit == 'F')) return;
+    var l = big_data.therm.length;
+    if (!l || big_data.therm[l - 1].date < data.date)
+        big_data.therm.push({date: data.date, value: data.value});
+    if (l == max_spark)
+        big_data.therm.shift();
+    pThermo.innerHTML = "" + data.value.toFixed(2) + "&deg;" + data.unit;
+    pThermo.innerHTML += "<br>" + spark(big_data.therm.map(pluckValue));
+}
+function handleHumid(data) {
+    var l = big_data.humid.length;
+    if (!l || big_data.humid[l - 1].date < data.date)
+        big_data.humid.push({date: data.date, value: data.value});
+    if (l == max_spark)
+        big_data.humid.shift();
+    pHumid.innerHTML = "" + data.value.toFixed(2) + " " + data.unit;
+    pHumid.innerHTML += "<br>" + spark(big_data.humid.map(pluckValue));
+}
+
+function pluckValue(item) {
+    return item.value;
+}
+</script>
+</body>
+</html>

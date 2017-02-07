@@ -1,0 +1,23 @@
+{
+  "name": "skyfall-menubar",
+  "version": "0.1.0",
+  "description": "A menubar view into SKYFALL",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-packager . SkyfallMenu --platform=darwin --arch=x64 --version=0.36.0 --icon=Icon.icns --overwrite",
+    "start": "electron ."
+  },
+  "author": "andjosh",
+  "license": "MIT",
+  "dependencies": {
+    "debug": "^2.6.0",
+    "menubar": "^5.2.2",
+    "request": "^2.79.0",
+    "sparkline": "^0.1.2"
+  },
+  "devDependencies": {
+    "electron-packager": "^8.5.1",
+    "electron-prebuilt": "^1.4.13"
+  }
+}
