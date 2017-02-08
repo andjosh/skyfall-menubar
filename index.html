@@ -6,21 +6,37 @@ body{
     text-align: center;
     font-family: monospace;
 }
+.sparkline {
+    fill: none;
+    stroke: #000;
+    stroke-width: 0.5px;
+}
+.sparkcircle {
+    fill: #f00;
+    stroke: none;
+}
 </style>
 </head>
 <body>
     <div id="BARORESISTOR"></div>
+    <div id="BAROM_SPARK"></div>
     <div id="THERMORESISTOR"></div>
+    <div id="THERM_SPARK"></div>
     <div id="HUMISTOR"></div>
+    <div id="HUMID_SPARK"></div>
     <div id="PHOTORESISTOR"></div>
+    <div id="PHOTO_SPARK"></div>
 <script>
 var ipc       = require('electron').ipcRenderer,
     spark     = require('sparkline'),
+    d3        = require('d3'),
     pBaro     = document.querySelector('#BARORESISTOR'),
     pThermo   = document.querySelector('#THERMORESISTOR'),
     pPhoto    = document.querySelector('#PHOTORESISTOR'),
     pHumid    = document.querySelector('#HUMISTOR'),
     max_spark = 10,
+    spark_w   = 100,
+    spark_h   = 16,
     big_data  = {};
 
 big_data.humid = [];
@@ -63,7 +79,8 @@ function handleBaro(data) {
     if (l == max_spark)
         big_data.barom.shift();
     pBaro.innerHTML = "" + data.value.toFixed(2) + " " + data.unit;
-    pBaro.innerHTML += "<br>" + spark(big_data.barom.map(pluckValue));
+    //pBaro.innerHTML += "<br>" + spark(big_data.barom.map(pluckValue));
+    sparkline('#BAROM_SPARK', big_data.barom, spark_w, spark_h);
 }
 function handlePhoto(data) {
     var l = big_data.photo.length;
@@ -72,7 +89,8 @@ function handlePhoto(data) {
     if (l == max_spark)
         big_data.photo.shift();
     pPhoto.innerHTML = "" + data.value.toFixed(2) + " " + data.unit;
-    pPhoto.innerHTML += "<br>" + spark(big_data.photo.map(pluckValue));
+    //pPhoto.innerHTML += "<br>" + spark(big_data.photo.map(pluckValue));
+    sparkline('#PHOTO_SPARK', big_data.photo, spark_w, spark_h);
 }
 function handleThermo(data) {
     if (!(data.unit == 'F')) return;
@@ -82,7 +100,8 @@ function handleThermo(data) {
     if (l == max_spark)
         big_data.therm.shift();
     pThermo.innerHTML = "" + data.value.toFixed(2) + "&deg;" + data.unit;
-    pThermo.innerHTML += "<br>" + spark(big_data.therm.map(pluckValue));
+    //pThermo.innerHTML += "<br>" + spark(big_data.therm.map(pluckValue));
+    sparkline('#THERM_SPARK', big_data.therm, spark_w, spark_h);
 }
 function handleHumid(data) {
     var l = big_data.humid.length;
@@ -91,11 +110,40 @@ function handleHumid(data) {
     if (l == max_spark)
         big_data.humid.shift();
     pHumid.innerHTML = "" + data.value.toFixed(2) + " " + data.unit;
-    pHumid.innerHTML += "<br>" + spark(big_data.humid.map(pluckValue));
+    //pHumid.innerHTML += "<br>" + spark(big_data.humid.map(pluckValue));
+    sparkline('#HUMID_SPARK', big_data.humid, spark_w, spark_h);
 }
 
 function pluckValue(item) {
     return item.value;
+}
+
+function sparkline(elemId, data, width, height) {
+    document.querySelector(elemId).innerHTML = '';
+
+    var x = d3.scaleLinear().range([0, width - 2]);
+    var y = d3.scaleLinear().range([height - 4, 0]);
+    x.domain(d3.extent(data, function(d) { return d.date;  }));
+    y.domain(d3.extent(data, function(d) { return d.value;  }));
+
+    var line = d3.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.value); });
+    var svg = d3.select(elemId)
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .append('g')
+        .attr('transform', 'translate(0, 2)');
+    svg.append('path')
+        .datum(data)
+        .attr('class', 'sparkline')
+        .attr('d', line);
+    svg.append('circle')
+        .attr('class', 'sparkcircle')
+        .attr('cx', x(data[data.length - 1].date))
+        .attr('cy', y(data[data.length - 1].value))
+        .attr('r', 1.5);  
 }
 </script>
 </body>
