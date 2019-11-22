@@ -15,7 +15,7 @@
     "debug": "^2.6.0",
     "menubar": "^5.2.2",
     "request": "^2.79.0",
-    "sparkline": "^0.1.2"
+    "sparkline": "^0.2.0"
   },
   "devDependencies": {
     "electron-packager": "^8.5.1",
